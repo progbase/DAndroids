@@ -2,7 +2,7 @@
 #include <Servo.h>
 //link -->> https://github.com/shirriff/Arduino-IRremote
 
-const int IR_PIN = 2; // pin to connect
+const int IR_PIN = A0; // pin to connect
 Servo left_servo;
 Servo central_servo;
 Servo right_servo;
@@ -48,7 +48,7 @@ void setup() {
   lastMillis = millis();
 }
 
-int findAngle(int amplitude, float angleservo, float phaseMillis){
+int findAngle(int amplitude, float angleservo, float phaseMillis) {
   float beta =  2 * PI * phaseMillis / stepPeriod + angleservo;
   float angle = amplitude * sin(beta);
   return (int)angle;
@@ -76,8 +76,8 @@ void loop() {
     Serial.print("0x");
     Serial.println(results.value, HEX);
     ServoAttach();
-    if (results.value == 0xFF6897) { 
-      // нажаття "1" рух вперед  
+    if (results.value == 0xFF6897 || results.value == 0xFF629D) { 
+      // нажаття "1"/"стрілка вгору" рух вперед  
       angleLeftServo = 0;
       angleRightServo = 0;
       angleCentralServo = PI/2;
@@ -87,8 +87,18 @@ void loop() {
       stepPeriod = 1500; 
       
       stopped = false;
-    } else if (results.value == 0xFF9867) {  
-      // нажаття "2" рух назад
+    } else if (results.value == 0xFF22DD) {
+      if (!stopped) {
+        angleLeftServo = 2;
+        angleRightServo = 1;
+      }
+    } else if (results.value == 0xFFC23D) {
+      if (!stopped) {
+        angleLeftServo = 1;
+        angleRightServo = 2;
+      }
+    } else if (results.value == 0xFF9867 || results.value == 0xFFA857) {  
+      // нажаття "2"/"стрілка вниз" рух назад
       angleLeftServo = 0;
       angleRightServo = 0;
       angleCentralServo = -PI/2;
@@ -107,12 +117,23 @@ void loop() {
       
       stopped = false;
     } else if (results.value == 0xFF02FD) {
+      // нажаття "ОК" зупинка
       angleLeftServo = 0;
       angleRightServo = 0;
       angleCentralServo = 0;
 
       LEFT_SERVO_ZERO_VALUE = 70;
       RIGHT_SERVO_ZERO_VALUE = 75;
+
+      stopped = true;
+    } else if (results.value == 0xFF4AB5) {
+      // нажаття "0" позиція для руху назад
+      angleLeftServo = 0;
+      angleRightServo = 0;
+      angleCentralServo = 0;
+
+      LEFT_SERVO_ZERO_VALUE = 100;
+      RIGHT_SERVO_ZERO_VALUE = 70;
 
       stopped = true;
     }
